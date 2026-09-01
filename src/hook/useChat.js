@@ -14,7 +14,7 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import Groq from '@groq/groq-sdk';
+import Groq from 'groq-sdk';  // ← SỬA IMPORT
 import toast from 'react-hot-toast';
 
 // =============================================
