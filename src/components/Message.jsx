@@ -19,6 +19,7 @@ const Message = ({ msg }) => {
         marginBottom: '12px'
       }}
     >
+      {/* ===== HEADER ===== */}
       <div style={{
         fontSize: '12px',
         color: isUser ? '#00ff41' : '#888',
@@ -27,24 +28,33 @@ const Message = ({ msg }) => {
         alignItems: 'center',
         gap: '8px'
       }}>
-        <span>{isUser ? '🧑 Bạn' : '🤖 An Nam AI'}</span>
+        <span>{isUser ? ' Bạn' : ' An Nam AI'}</span>
         {msg.files && msg.files.length > 0 && (
           <span style={{ fontSize: '11px', color: '#555' }}>
             📎 {msg.files.map(f => f.name).join(', ')}
           </span>
         )}
       </div>
+
+      {/* ===== CONTENT ===== */}
       <div style={{ color: '#eee', lineHeight: '1.7', fontSize: '15px', wordBreak: 'break-word' }}>
         <ReactMarkdown
           components={{
             code({ node, inline, className, children, ...props }) {
               const match = /language-(\w+)/.exec(className || '');
               return !inline && match ? (
-                <SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div" {...props}>
+                <SyntaxHighlighter
+                  style={vscDarkPlus}
+                  language={match[1]}
+                  PreTag="div"
+                  {...props}
+                >
                   {String(children).replace(/\n$/, '')}
                 </SyntaxHighlighter>
               ) : (
-                <code className={className} {...props}>{children}</code>
+                <code className={className} {...props}>
+                  {children}
+                </code>
               );
             }
           }}
