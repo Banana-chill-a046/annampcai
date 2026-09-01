@@ -5,13 +5,13 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
-  sendPasswordResetEmail,
-  updateProfile
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 import toast from 'react-hot-toast';
 
 export const useAuth = () => {
+  // ===== STATE =====
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
@@ -32,10 +32,10 @@ export const useAuth = () => {
     setError('');
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast.success('Đăng nhập thành công! 🎉');
+      toast.success('🎉 Đăng nhập thành công!');
       return true;
     } catch (err) {
-      const msg = getAuthErrorMessage(err);
+      const msg = getErrorMessage(err);
       setError(msg);
       toast.error(msg);
       return false;
@@ -45,18 +45,15 @@ export const useAuth = () => {
   };
 
   // ===== REGISTER =====
-  const register = async (email, password, displayName = '') => {
+  const register = async (email, password) => {
     setAuthLoading(true);
     setError('');
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      if (displayName) {
-        await updateProfile(result.user, { displayName });
-      }
-      toast.success('Đăng ký thành công! 🎉');
+      await createUserWithEmailAndPassword(auth, email, password);
+      toast.success('🎉 Đăng ký thành công!');
       return true;
     } catch (err) {
-      const msg = getAuthErrorMessage(err);
+      const msg = getErrorMessage(err);
       setError(msg);
       toast.error(msg);
       return false;
@@ -65,16 +62,16 @@ export const useAuth = () => {
     }
   };
 
-  // ===== GOOGLE LOGIN =====
+  // ===== LOGIN WITH GOOGLE =====
   const loginWithGoogle = async () => {
     setAuthLoading(true);
     setError('');
     try {
       await signInWithPopup(auth, googleProvider);
-      toast.success('Đăng nhập Google thành công! 🎉');
+      toast.success('🎉 Đăng nhập Google thành công!');
       return true;
     } catch (err) {
-      const msg = getAuthErrorMessage(err);
+      const msg = getErrorMessage(err);
       setError(msg);
       toast.error(msg);
       return false;
@@ -89,7 +86,7 @@ export const useAuth = () => {
       await signOut(auth);
       toast.success('Đã đăng xuất!');
       return true;
-    } catch (err) {
+    } catch {
       toast.error('Đăng xuất thất bại!');
       return false;
     }
@@ -98,15 +95,12 @@ export const useAuth = () => {
   // ===== FORGOT PASSWORD =====
   const forgotPassword = async (email) => {
     setAuthLoading(true);
-    setError('');
     try {
       await sendPasswordResetEmail(auth, email);
-      toast.success('Email đặt lại mật khẩu đã gửi! 📧');
+      toast.success('📧 Email đặt lại mật khẩu đã gửi!');
       return true;
-    } catch (err) {
-      const msg = 'Không thể gửi email. Vui lòng kiểm tra lại.';
-      setError(msg);
-      toast.error(msg);
+    } catch {
+      toast.error('Không thể gửi email!');
       return false;
     } finally {
       setAuthLoading(false);
@@ -114,18 +108,18 @@ export const useAuth = () => {
   };
 
   // ===== HELPERS =====
-  const getAuthErrorMessage = (err) => {
-    const map = {
-      'auth/user-not-found': 'Email không tồn tại.',
-      'auth/wrong-password': 'Sai mật khẩu.',
-      'auth/invalid-email': 'Email không hợp lệ.',
-      'auth/too-many-requests': 'Quá nhiều lần thử. Vui lòng đợi.',
-      'auth/email-already-in-use': 'Email đã được sử dụng.',
-      'auth/weak-password': 'Mật khẩu quá yếu (tối thiểu 6 ký tự).',
-      'auth/popup-closed-by-user': 'Bạn đã đóng cửa sổ đăng nhập.',
-      'auth/popup-blocked': 'Popup bị chặn. Vui lòng cho phép popup.'
+  const getErrorMessage = (err) => {
+    const errorMap = {
+      'auth/user-not-found': '❌ Email không tồn tại.',
+      'auth/wrong-password': '❌ Sai mật khẩu.',
+      'auth/invalid-email': '❌ Email không hợp lệ.',
+      'auth/too-many-requests': '❌ Quá nhiều lần thử. Vui lòng đợi.',
+      'auth/email-already-in-use': '❌ Email đã được sử dụng.',
+      'auth/weak-password': '❌ Mật khẩu quá yếu (tối thiểu 6 ký tự).',
+      'auth/popup-closed-by-user': '❌ Bạn đã đóng cửa sổ đăng nhập.',
+      'auth/popup-blocked': '❌ Popup bị chặn. Vui lòng cho phép popup.'
     };
-    return map[err.code] || err.message || 'Đã có lỗi xảy ra.';
+    return errorMap[err.code] || err.message || '❌ Đã có lỗi xảy ra.';
   };
 
   return {
@@ -133,11 +127,11 @@ export const useAuth = () => {
     loading,
     authLoading,
     error,
+    setError,
     login,
     register,
     loginWithGoogle,
     logout,
-    forgotPassword,
-    setError
+    forgotPassword
   };
 };
