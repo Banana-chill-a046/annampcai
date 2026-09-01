@@ -1,10 +1,8 @@
 {
   "name": "an-nam-ai",
   "private": true,
-  "version": "2.0.0",
+  "version": "3.0.0",
   "type": "module",
-  "description": "An Nam AI - Trợ lý trí tuệ nhân tạo với 3 mô hình Groq",
-  "author": "An Nam AI Team",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -17,11 +15,13 @@
     "@groq/groq-sdk": "^0.4.1",
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.5.0",
-    "react-hot-toast": "^2.4.1"
+    "react-hot-toast": "^2.4.1",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0",
+    "xlsx": "^0.18.5",
+    "jszip": "^3.10.1"
   },
   "devDependencies": {
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.0.8"
   }
