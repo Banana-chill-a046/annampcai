@@ -2,24 +2,26 @@ import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
 const Auth = ({ isOpen, onClose }) => {
-  const { login, register, loginWithGoogle, authLoading, error, setError } = useAuth();
+  // ===== HOOKS =====
+  const { login, register, loginWithGoogle, authLoading, error, setError, forgotPassword } = useAuth();
 
+  // ===== STATE =====
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   if (!isOpen) return null;
 
+  // ===== HANDLERS =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (isLogin) {
-      await login(email, password);
-      if (!error) onClose();
+      const success = await login(email, password);
+      if (success) onClose();
     } else {
       if (password !== confirmPassword) {
         setError('Mật khẩu không khớp!');
@@ -29,7 +31,7 @@ const Auth = ({ isOpen, onClose }) => {
         setError('Mật khẩu phải có ít nhất 6 ký tự!');
         return;
       }
-      const success = await register(email, password, displayName);
+      const success = await register(email, password);
       if (success) onClose();
     }
   };
@@ -39,10 +41,25 @@ const Auth = ({ isOpen, onClose }) => {
       setError('Vui lòng nhập email!');
       return;
     }
-    await forgotPassword(email);
-    if (!error) setShowForgotPassword(false);
+    const success = await forgotPassword(email);
+    if (success) setShowForgotPassword(false);
   };
 
+  // ===== STYLES =====
+  const inputStyle = {
+    width: '100%',
+    padding: '14px 16px',
+    marginBottom: '14px',
+    background: '#1a1a1a',
+    border: '1px solid rgba(0,255,65,0.2)',
+    color: '#00ff41',
+    borderRadius: '10px',
+    fontSize: '15px',
+    outline: 'none',
+    transition: 'border-color 0.3s'
+  };
+
+  // ===== RENDER =====
   return (
     <div
       style={{
@@ -62,9 +79,9 @@ const Auth = ({ isOpen, onClose }) => {
         style={{
           background: '#0d0d0d',
           padding: '40px',
-          borderRadius: '20px',
+          borderRadius: '16px',
           border: '1px solid #00ff41',
-          boxShadow: '0 0 80px rgba(0,255,65,0.15)',
+          boxShadow: '0 0 60px rgba(0,255,65,0.1)',
           width: '440px',
           maxWidth: '100%',
           maxHeight: '90vh',
@@ -73,32 +90,22 @@ const Auth = ({ isOpen, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* ===== HEADER ===== */}
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <img src="/2.png" alt="An Nam AI" style={{ height: '50px', marginBottom: '12px' }} />
           <h2 style={{
             color: '#00ff41',
             fontSize: '24px',
-            textShadow: '0 0 30px rgba(0,255,65,0.3)'
+            textShadow: '0 0 30px rgba(0,255,65,0.2)'
           }}>
             {isLogin ? 'Đăng nhập' : 'Tạo tài khoản'}
           </h2>
           <p style={{ color: '#666', fontSize: '14px', marginTop: '6px' }}>
-            {isLogin ? 'Chào mừng trở lại!' : 'Bắt đầu hành trình với An Nam AI'}
+            {isLogin ? 'Chào mừng trở lại!' : 'Bắt đầu với An Nam AI'}
           </p>
         </div>
 
         {/* ===== FORM ===== */}
         <form onSubmit={handleSubmit}>
-          {!isLogin && (
-            <input
-              type="text"
-              placeholder="Tên hiển thị (tùy chọn)"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              style={inputStyle}
-            />
-          )}
-
           <input
             type="email"
             placeholder="Email"
@@ -107,7 +114,6 @@ const Auth = ({ isOpen, onClose }) => {
             required
             style={inputStyle}
           />
-
           <input
             type="password"
             placeholder="Mật khẩu"
@@ -116,7 +122,6 @@ const Auth = ({ isOpen, onClose }) => {
             required
             style={inputStyle}
           />
-
           {!isLogin && (
             <input
               type="password"
@@ -127,13 +132,11 @@ const Auth = ({ isOpen, onClose }) => {
               style={inputStyle}
             />
           )}
-
           {error && (
             <p style={{ color: '#ff4444', fontSize: '14px', marginBottom: '12px' }}>
               ⚠️ {error}
             </p>
           )}
-
           <button
             type="submit"
             disabled={authLoading}
@@ -143,12 +146,12 @@ const Auth = ({ isOpen, onClose }) => {
               background: '#00ff41',
               color: '#0a0a0a',
               border: 'none',
-              borderRadius: '12px',
+              borderRadius: '10px',
               fontWeight: 'bold',
               fontSize: '16px',
-              boxShadow: '0 0 30px rgba(0,255,65,0.3)',
-              cursor: authLoading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 0 30px rgba(0,255,65,0.2)',
               opacity: authLoading ? 0.5 : 1,
+              cursor: authLoading ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s'
             }}
           >
@@ -157,12 +160,7 @@ const Auth = ({ isOpen, onClose }) => {
         </form>
 
         {/* ===== DIVIDER ===== */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          margin: '20px 0'
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '20px 0' }}>
           <div style={{ flex: 1, height: '1px', background: '#333' }} />
           <span style={{ color: '#666', fontSize: '13px' }}>HOẶC</span>
           <div style={{ flex: 1, height: '1px', background: '#333' }} />
@@ -178,7 +176,7 @@ const Auth = ({ isOpen, onClose }) => {
             background: '#1a1a1a',
             color: '#00ff41',
             border: '1px solid #00ff41',
-            borderRadius: '12px',
+            borderRadius: '10px',
             fontSize: '15px',
             cursor: authLoading ? 'not-allowed' : 'pointer',
             transition: 'all 0.3s',
@@ -195,18 +193,18 @@ const Auth = ({ isOpen, onClose }) => {
         </button>
 
         {/* ===== FOOTER ===== */}
-        <div style={{ textAlign: 'center', marginTop: '20px', color: '#888', fontSize: '14px' }}>
+        <div style={{ textAlign: 'center', marginTop: '16px', color: '#888', fontSize: '14px' }}>
           {isLogin ? 'Chưa có tài khoản? ' : 'Đã có tài khoản? '}
           <span
             onClick={() => { setIsLogin(!isLogin); setError(''); }}
             style={{ color: '#00ff41', cursor: 'pointer', textDecoration: 'underline' }}
           >
-            {isLogin ? 'Đăng ký ngay' : 'Đăng nhập'}
+            {isLogin ? 'Đăng ký' : 'Đăng nhập'}
           </span>
         </div>
 
         {isLogin && (
-          <div style={{ textAlign: 'center', marginTop: '10px' }}>
+          <div style={{ textAlign: 'center', marginTop: '8px' }}>
             <span
               onClick={() => setShowForgotPassword(true)}
               style={{ color: '#666', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}
@@ -260,14 +258,24 @@ const Auth = ({ isOpen, onClose }) => {
           >
             <h3 style={{ color: '#00ff41', marginBottom: '16px' }}>Đặt lại mật khẩu</h3>
             <p style={{ color: '#888', fontSize: '14px', marginBottom: '16px' }}>
-              Nhập email của bạn để nhận link đặt lại mật khẩu.
+              Nhập email để nhận link đặt lại mật khẩu.
             </p>
             <input
               type="email"
               placeholder="Email của bạn"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={inputStyle}
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                marginBottom: '14px',
+                background: '#1a1a1a',
+                border: '1px solid rgba(0,255,65,0.2)',
+                color: '#00ff41',
+                borderRadius: '10px',
+                fontSize: '15px',
+                outline: 'none'
+              }}
             />
             <button
               onClick={handleForgotPassword}
@@ -305,20 +313,6 @@ const Auth = ({ isOpen, onClose }) => {
       )}
     </div>
   );
-};
-
-// ===== STYLES =====
-const inputStyle = {
-  width: '100%',
-  padding: '14px 16px',
-  marginBottom: '14px',
-  background: '#1a1a1a',
-  border: '1px solid rgba(0,255,65,0.2)',
-  color: '#00ff41',
-  borderRadius: '10px',
-  fontSize: '15px',
-  outline: 'none',
-  transition: 'border-color 0.3s'
 };
 
 export default Auth;
