@@ -23,6 +23,7 @@ const Sidebar = ({
       flexShrink: 0,
       height: '100vh'
     }}>
+      {/* ===== HEADER ===== */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -33,7 +34,12 @@ const Sidebar = ({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img src="/2.png" alt="Logo" style={{ height: '30px' }} />
-          <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#00ff41', textShadow: '0 0 10px rgba(0,255,65,0.15)' }}>
+          <span style={{
+            fontSize: '15px',
+            fontWeight: 'bold',
+            color: '#00ff41',
+            textShadow: '0 0 10px rgba(0,255,65,0.15)'
+          }}>
             Lịch sử
           </span>
         </div>
@@ -58,10 +64,20 @@ const Sidebar = ({
         </button>
       </div>
 
+      {/* ===== LIST ===== */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {conversations.length === 0 ? (
-          <div style={{ color: '#555', textAlign: 'center', marginTop: '30px', fontSize: '14px' }}>
-            Chưa có chat nào
+          <div style={{
+            color: '#555',
+            textAlign: 'center',
+            marginTop: '40px',
+            fontSize: '14px'
+          }}>
+            Chưa có cuộc trò chuyện nào
+            <br />
+            <span style={{ fontSize: '12px', color: '#444' }}>
+              Nhấn "+ Mới" để bắt đầu
+            </span>
           </div>
         ) : (
           conversations.map((conv) => (
@@ -94,7 +110,8 @@ const Sidebar = ({
                 maxWidth: '180px',
                 color: currentChatId === conv.id ? '#00ff41' : '#ccc'
               }}>
-                {conv.hasFiles ? '📎 ' : ''}{conv.title || 'Chat mới'}
+                {conv.hasFiles && '📎 '}
+                {conv.title || 'Chat mới'}
               </span>
               {(hoveredId === conv.id || currentChatId === conv.id) && (
                 <span
@@ -117,6 +134,7 @@ const Sidebar = ({
         )}
       </div>
 
+      {/* ===== FOOTER ===== */}
       <div style={{ paddingTop: '15px', borderTop: '1px solid rgba(0,255,65,0.1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
           <div style={{
@@ -133,7 +151,14 @@ const Sidebar = ({
           }}>
             {user?.email?.[0]?.toUpperCase() || 'U'}
           </div>
-          <span style={{ fontSize: '13px', color: '#aaa', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span style={{
+            fontSize: '13px',
+            color: '#aaa',
+            flex: 1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
             {user?.email}
           </span>
         </div>
