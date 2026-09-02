@@ -2,19 +2,16 @@ import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
 const Auth = ({ isOpen, onClose }) => {
-  // ===== HOOKS =====
   const { login, register, loginWithGoogle, authLoading, error, setError, forgotPassword } = useAuth();
-
-  // ===== STATE =====
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   if (!isOpen) return null;
 
-  // ===== HANDLERS =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -31,7 +28,7 @@ const Auth = ({ isOpen, onClose }) => {
         setError('Mật khẩu phải có ít nhất 6 ký tự!');
         return;
       }
-      const success = await register(email, password);
+      const success = await register(email, password, displayName);
       if (success) onClose();
     }
   };
@@ -45,21 +42,19 @@ const Auth = ({ isOpen, onClose }) => {
     if (success) setShowForgotPassword(false);
   };
 
-  // ===== STYLES =====
   const inputStyle = {
     width: '100%',
     padding: '14px 16px',
     marginBottom: '14px',
-    background: '#1a1a1a',
-    border: '1px solid rgba(0,255,65,0.2)',
-    color: '#00ff41',
+    background: 'var(--input-bg)',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-primary)',
     borderRadius: '10px',
     fontSize: '15px',
     outline: 'none',
     transition: 'border-color 0.3s'
   };
 
-  // ===== RENDER =====
   return (
     <div
       style={{
@@ -77,11 +72,11 @@ const Auth = ({ isOpen, onClose }) => {
     >
       <div
         style={{
-          background: '#0d0d0d',
+          background: 'var(--bg-secondary)',
           padding: '40px',
           borderRadius: '16px',
-          border: '1px solid #00ff41',
-          boxShadow: '0 0 60px rgba(0,255,65,0.1)',
+          border: '1px solid var(--border-color)',
+          boxShadow: '0 0 60px var(--shadow-color)',
           width: '440px',
           maxWidth: '100%',
           maxHeight: '90vh',
@@ -89,23 +84,30 @@ const Auth = ({ isOpen, onClose }) => {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ===== HEADER ===== */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <img src="/2.png" alt="An Nam AI" style={{ height: '50px', marginBottom: '12px' }} />
           <h2 style={{
-            color: '#00ff41',
+            color: 'var(--text-primary)',
             fontSize: '24px',
-            textShadow: '0 0 30px rgba(0,255,65,0.2)'
+            textShadow: '0 0 30px var(--shadow-color)'
           }}>
             {isLogin ? 'Đăng nhập' : 'Tạo tài khoản'}
           </h2>
-          <p style={{ color: '#666', fontSize: '14px', marginTop: '6px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '6px' }}>
             {isLogin ? 'Chào mừng trở lại!' : 'Bắt đầu với An Nam AI'}
           </p>
         </div>
 
-        {/* ===== FORM ===== */}
         <form onSubmit={handleSubmit}>
+          {!isLogin && (
+            <input
+              type="text"
+              placeholder="Tên hiển thị"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              style={inputStyle}
+            />
+          )}
           <input
             type="email"
             placeholder="Email"
@@ -143,13 +145,13 @@ const Auth = ({ isOpen, onClose }) => {
             style={{
               width: '100%',
               padding: '14px',
-              background: '#00ff41',
-              color: '#0a0a0a',
+              background: 'var(--text-primary)',
+              color: 'var(--bg-primary)',
               border: 'none',
               borderRadius: '10px',
               fontWeight: 'bold',
               fontSize: '16px',
-              boxShadow: '0 0 30px rgba(0,255,65,0.2)',
+              boxShadow: '0 0 30px var(--shadow-color)',
               opacity: authLoading ? 0.5 : 1,
               cursor: authLoading ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s'
@@ -159,23 +161,21 @@ const Auth = ({ isOpen, onClose }) => {
           </button>
         </form>
 
-        {/* ===== DIVIDER ===== */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '20px 0' }}>
-          <div style={{ flex: 1, height: '1px', background: '#333' }} />
-          <span style={{ color: '#666', fontSize: '13px' }}>HOẶC</span>
-          <div style={{ flex: 1, height: '1px', background: '#333' }} />
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
+          <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>HOẶC</span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
         </div>
 
-        {/* ===== GOOGLE ===== */}
         <button
           onClick={loginWithGoogle}
           disabled={authLoading}
           style={{
             width: '100%',
             padding: '14px',
-            background: '#1a1a1a',
-            color: '#00ff41',
-            border: '1px solid #00ff41',
+            background: 'var(--input-bg)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-color)',
             borderRadius: '10px',
             fontSize: '15px',
             cursor: authLoading ? 'not-allowed' : 'pointer',
@@ -185,19 +185,18 @@ const Auth = ({ isOpen, onClose }) => {
             justifyContent: 'center',
             gap: '10px'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,255,65,0.1)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = '#1a1a1a'}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-bg)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--input-bg)'}
         >
           <span style={{ fontSize: '20px' }}>🌐</span>
           Đăng nhập với Google
         </button>
 
-        {/* ===== FOOTER ===== */}
-        <div style={{ textAlign: 'center', marginTop: '16px', color: '#888', fontSize: '14px' }}>
+        <div style={{ textAlign: 'center', marginTop: '16px', color: 'var(--text-muted)', fontSize: '14px' }}>
           {isLogin ? 'Chưa có tài khoản? ' : 'Đã có tài khoản? '}
           <span
             onClick={() => { setIsLogin(!isLogin); setError(''); }}
-            style={{ color: '#00ff41', cursor: 'pointer', textDecoration: 'underline' }}
+            style={{ color: 'var(--text-primary)', cursor: 'pointer', textDecoration: 'underline' }}
           >
             {isLogin ? 'Đăng ký' : 'Đăng nhập'}
           </span>
@@ -207,14 +206,13 @@ const Auth = ({ isOpen, onClose }) => {
           <div style={{ textAlign: 'center', marginTop: '8px' }}>
             <span
               onClick={() => setShowForgotPassword(true)}
-              style={{ color: '#666', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}
+              style={{ color: 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}
             >
               Quên mật khẩu?
             </span>
           </div>
         )}
 
-        {/* ===== CLOSE ===== */}
         <button
           onClick={onClose}
           style={{
@@ -222,7 +220,7 @@ const Auth = ({ isOpen, onClose }) => {
             marginTop: '16px',
             background: 'transparent',
             border: 'none',
-            color: '#555',
+            color: 'var(--text-muted)',
             fontSize: '14px',
             cursor: 'pointer'
           }}
@@ -231,7 +229,7 @@ const Auth = ({ isOpen, onClose }) => {
         </button>
       </div>
 
-      {/* ===== FORGOT PASSWORD POPUP ===== */}
+      {/* Forgot Password Popup */}
       {showForgotPassword && (
         <div
           style={{
@@ -247,17 +245,17 @@ const Auth = ({ isOpen, onClose }) => {
         >
           <div
             style={{
-              background: '#0d0d0d',
+              background: 'var(--bg-secondary)',
               padding: '30px',
               borderRadius: '16px',
-              border: '1px solid #00ff41',
+              border: '1px solid var(--border-color)',
               width: '380px',
               maxWidth: '90%'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ color: '#00ff41', marginBottom: '16px' }}>Đặt lại mật khẩu</h3>
-            <p style={{ color: '#888', fontSize: '14px', marginBottom: '16px' }}>
+            <h3 style={{ color: 'var(--text-primary)', marginBottom: '16px' }}>Đặt lại mật khẩu</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '16px' }}>
               Nhập email để nhận link đặt lại mật khẩu.
             </p>
             <input
@@ -269,9 +267,9 @@ const Auth = ({ isOpen, onClose }) => {
                 width: '100%',
                 padding: '14px 16px',
                 marginBottom: '14px',
-                background: '#1a1a1a',
-                border: '1px solid rgba(0,255,65,0.2)',
-                color: '#00ff41',
+                background: 'var(--input-bg)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
                 borderRadius: '10px',
                 fontSize: '15px',
                 outline: 'none'
@@ -283,8 +281,8 @@ const Auth = ({ isOpen, onClose }) => {
               style={{
                 width: '100%',
                 padding: '12px',
-                background: '#00ff41',
-                color: '#0a0a0a',
+                background: 'var(--text-primary)',
+                color: 'var(--bg-primary)',
                 border: 'none',
                 borderRadius: '10px',
                 fontWeight: 'bold',
@@ -302,7 +300,7 @@ const Auth = ({ isOpen, onClose }) => {
                 marginTop: '10px',
                 background: 'transparent',
                 border: 'none',
-                color: '#555',
+                color: 'var(--text-muted)',
                 cursor: 'pointer'
               }}
             >
