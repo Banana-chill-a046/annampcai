@@ -3,8 +3,26 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-const Message = ({ msg }) => {
+const Message = ({ msg, theme }) => {
   const isUser = msg.role === 'user';
+
+  const getBgColor = () => {
+    if (isUser) {
+      if (theme === 'stars') return 'rgba(255,107,255,0.08)';
+      if (theme === 'light') return 'rgba(0,0,0,0.05)';
+      return 'rgba(0,255,65,0.06)';
+    }
+    return 'var(--bg-card)';
+  };
+
+  const getBorderColor = () => {
+    if (isUser) {
+      if (theme === 'stars') return 'rgba(255,107,255,0.2)';
+      if (theme === 'light') return 'rgba(0,0,0,0.1)';
+      return 'rgba(0,255,65,0.15)';
+    }
+    return 'var(--border-color)';
+  };
 
   return (
     <div
@@ -12,17 +30,16 @@ const Message = ({ msg }) => {
       style={{
         alignSelf: isUser ? 'flex-end' : 'flex-start',
         maxWidth: '85%',
-        background: isUser ? 'rgba(0,255,65,0.06)' : '#1a1a1a',
+        background: getBgColor(),
         padding: '14px 20px',
         borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-        border: isUser ? '1px solid rgba(0,255,65,0.15)' : '1px solid rgba(255,255,255,0.05)',
+        border: `1px solid ${getBorderColor()}`,
         marginBottom: '12px'
       }}
     >
-      {/* ===== HEADER ===== */}
       <div style={{
         fontSize: '12px',
-        color: isUser ? '#00ff41' : '#888',
+        color: isUser ? 'var(--text-primary)' : 'var(--text-muted)',
         marginBottom: '6px',
         display: 'flex',
         alignItems: 'center',
@@ -30,14 +47,17 @@ const Message = ({ msg }) => {
       }}>
         <span>{isUser ? ' Bạn' : ' An Nam AI'}</span>
         {msg.files && msg.files.length > 0 && (
-          <span style={{ fontSize: '11px', color: '#555' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
             📎 {msg.files.map(f => f.name).join(', ')}
           </span>
         )}
       </div>
-
-      {/* ===== CONTENT ===== */}
-      <div style={{ color: '#eee', lineHeight: '1.7', fontSize: '15px', wordBreak: 'break-word' }}>
+      <div style={{
+        color: 'var(--text-primary)',
+        lineHeight: '1.7',
+        fontSize: '15px',
+        wordBreak: 'break-word'
+      }}>
         <ReactMarkdown
           components={{
             code({ node, inline, className, children, ...props }) {
