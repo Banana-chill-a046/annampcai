@@ -5,19 +5,18 @@ import {
   signInWithPopup,
   signOut,
   onAuthStateChanged,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 import toast from 'react-hot-toast';
 
 export const useAuth = () => {
-  // ===== STATE =====
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // ===== LISTEN AUTH STATE =====
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -26,7 +25,6 @@ export const useAuth = () => {
     return () => unsubscribe();
   }, []);
 
-  // ===== LOGIN =====
   const login = async (email, password) => {
     setAuthLoading(true);
     setError('');
@@ -44,12 +42,14 @@ export const useAuth = () => {
     }
   };
 
-  // ===== REGISTER =====
-  const register = async (email, password) => {
+  const register = async (email, password, displayName) => {
     setAuthLoading(true);
     setError('');
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      if (displayName) {
+        await updateProfile(result.user, { displayName });
+      }
       toast.success('🎉 Đăng ký thành công!');
       return true;
     } catch (err) {
@@ -62,7 +62,6 @@ export const useAuth = () => {
     }
   };
 
-  // ===== LOGIN WITH GOOGLE =====
   const loginWithGoogle = async () => {
     setAuthLoading(true);
     setError('');
@@ -80,7 +79,6 @@ export const useAuth = () => {
     }
   };
 
-  // ===== LOGOUT =====
   const logout = async () => {
     try {
       await signOut(auth);
@@ -92,7 +90,6 @@ export const useAuth = () => {
     }
   };
 
-  // ===== FORGOT PASSWORD =====
   const forgotPassword = async (email) => {
     setAuthLoading(true);
     try {
@@ -107,9 +104,8 @@ export const useAuth = () => {
     }
   };
 
-  // ===== HELPERS =====
   const getErrorMessage = (err) => {
-    const errorMap = {
+    const map = {
       'auth/user-not-found': '❌ Email không tồn tại.',
       'auth/wrong-password': '❌ Sai mật khẩu.',
       'auth/invalid-email': '❌ Email không hợp lệ.',
@@ -119,7 +115,7 @@ export const useAuth = () => {
       'auth/popup-closed-by-user': '❌ Bạn đã đóng cửa sổ đăng nhập.',
       'auth/popup-blocked': '❌ Popup bị chặn. Vui lòng cho phép popup.'
     };
-    return errorMap[err.code] || err.message || '❌ Đã có lỗi xảy ra.';
+    return map[err.code] || err.message || '❌ Đã có lỗi xảy ra.';
   };
 
   return {
