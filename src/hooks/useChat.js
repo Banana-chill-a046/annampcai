@@ -14,20 +14,14 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import Groq from 'groq-sdk';  // ← SỬA IMPORT
+import Groq from 'groq-sdk';
 import toast from 'react-hot-toast';
 
-// =============================================
-// ===== GROQ CLIENT =====
-// =============================================
 const groq = new Groq({
   apiKey: import.meta.env.VITE_GROQ_API_KEY,
   dangerouslyAllowBrowser: true
 });
 
-// =============================================
-// ===== MODEL CONFIGURATIONS =====
-// =============================================
 export const MODELS = {
   'llama-3.1-8b-instant': {
     id: 'llama-3.1-8b-instant',
@@ -64,34 +58,30 @@ export const MODELS = {
   }
 };
 
-// =============================================
-// ===== SYSTEM PROMPTS =====
-// =============================================
 const SYSTEM_PROMPTS = {
   basic: `Bạn là An Nam AI - trợ lý thông minh.
-- Trả lời bằng tiếng Việt
+- Trả lời bằng tiếng Việt, tự nhiên như ChatGPT
 - Phân tích ảnh cơ bản
-- Nếu không biết: "Tôi không biết, vui lòng cung cấp rõ hơn!"`,
+- Nếu không biết: "Tôi không biết, vui lòng cung cấp rõ hơn!"
+- Giọng điệu thân thiện, dễ hiểu`,
 
-  pro: `Bạn là An Nam AI Pro - siêu trợ lý đa phương thức.
-- Trả lời bằng tiếng Việt chuyên nghiệp
-- Phân tích ảnh chi tiết
+  pro: `Bạn là An Nam AI Pro - siêu trợ lý đa phương thức như Gemini.
+- Trả lời bằng tiếng Việt chuyên nghiệp, sâu sắc
+- Phân tích ảnh chi tiết, nhận diện đối tượng, cảm xúc
 - Phân tích tài liệu: Excel, Word, PDF, PPT
-- Hỗ trợ code: Python, Node.js`,
+- Hỗ trợ code: Python, Node.js, viết code chuẩn chỉnh
+- Giọng điệu: Thông thái, gần gũi`,
 
-  premium: `Bạn là An Nam AI Premium - trợ lý toàn năng.
-- Trả lời bằng tiếng Việt cao cấp
-- Phân tích ảnh chuyên sâu
-- Phân tích mọi loại tài liệu
-- Viết code chuyên nghiệp như Claude
-- Tư duy đa chiều, giải pháp tối ưu`
+  premium: `Bạn là An Nam AI Premium - trợ lý toàn năng như GPT-4.
+- Trả lời bằng tiếng Việt cao cấp, tư duy đa chiều
+- Phân tích ảnh chuyên sâu, nghệ thuật, bố cục
+- Phân tích mọi loại tài liệu, trích xuất thông minh
+- Viết code chuyên nghiệp như Claude, giải thích chi tiết
+- Tư duy phản biện, đưa ra giải pháp tối ưu
+- Giọng điệu: Uyên bác, truyền cảm hứng`
 };
 
-// =============================================
-// ===== HOOK =====
-// =============================================
 export const useChat = (user) => {
-  // ===== STATE =====
   const [conversations, setConversations] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -100,20 +90,17 @@ export const useChat = (user) => {
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  // ===== GET MODEL KEY =====
   const getModelKey = (modelId) => {
     if (modelId === 'llama-3.1-8b-instant') return 'basic';
     if (modelId === 'llama-3.3-70b-versatile') return 'pro';
     return 'premium';
   };
 
-  // ===== GET SYSTEM PROMPT =====
   const getSystemPrompt = (modelId) => {
     const key = getModelKey(modelId);
     return SYSTEM_PROMPTS[key] || SYSTEM_PROMPTS.basic;
   };
 
-  // ===== LOAD CONVERSATIONS =====
   const loadConversations = async () => {
     if (!user) return;
     try {
@@ -134,11 +121,9 @@ export const useChat = (user) => {
       }
     } catch (error) {
       console.error('Load conversations error:', error);
-      toast.error('Không thể tải lịch sử chat!');
     }
   };
 
-  // ===== LOAD USAGE =====
   const loadUsage = async () => {
     if (!user) return;
     try {
@@ -156,7 +141,6 @@ export const useChat = (user) => {
     }
   };
 
-  // ===== RESET DAILY USAGE =====
   const resetDailyUsage = async () => {
     if (!user) return;
     try {
@@ -173,10 +157,12 @@ export const useChat = (user) => {
     }
   };
 
-  // ===== CREATE NEW CHAT =====
   const createNewChat = async () => {
     if (!user) {
-      toast.error('Vui lòng đăng nhập!');
+      setMessages([]);
+      setCurrentChatId(null);
+      setUploadedFiles([]);
+      toast.success('📝 Bắt đầu chat mới! (Chưa lưu)');
       return;
     }
     try {
@@ -203,7 +189,6 @@ export const useChat = (user) => {
     }
   };
 
-  // ===== DELETE CHAT =====
   const deleteChat = async (chatId) => {
     if (!user || !chatId) return;
     if (!window.confirm('Bạn có chắc muốn xóa chat này?')) return;
@@ -222,7 +207,6 @@ export const useChat = (user) => {
     }
   };
 
-  // ===== PROCESS FILES =====
   const processFiles = async (files) => {
     const processed = [];
     for (const file of files) {
@@ -250,34 +234,19 @@ export const useChat = (user) => {
     return processed;
   };
 
-  // ===== SEND MESSAGE =====
   const sendMessage = async (input) => {
-    if (!user) {
-      toast.error('Vui lòng đăng nhập!');
-      return;
-    }
-
     if (!input.trim() && uploadedFiles.length === 0) return;
     if (loading) return;
 
-    // Check usage limit
     const modelKey = getModelKey(selectedModel);
     const modelInfo = MODELS[selectedModel];
     const used = usage[modelKey] || 0;
 
     if (modelInfo.limit !== Infinity && used >= modelInfo.limit) {
-      toast.error(`❌ Hết lượt ${modelInfo.label} hôm nay! Vui lòng đợi đến ngày mai.`);
+      toast.error(`❌ Hết lượt ${modelInfo.label} hôm nay!`);
       return;
     }
 
-    // Create new chat if none
-    if (!currentChatId) {
-      await createNewChat();
-      setTimeout(() => sendMessage(input), 400);
-      return;
-    }
-
-    // Build message with files
     let content = input.trim();
     if (uploadedFiles.length > 0) {
       const fileDescriptions = uploadedFiles.map(f => {
@@ -290,7 +259,6 @@ export const useChat = (user) => {
       content = content + '\n\n' + fileDescriptions.join('\n\n');
     }
 
-    // Create user message
     const userMsg = {
       role: 'user',
       content: content,
@@ -300,6 +268,48 @@ export const useChat = (user) => {
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setLoading(true);
+    setUploadedFiles([]);
+
+    // Nếu chưa login: KHÔNG lưu Firestore
+    if (!user) {
+      try {
+        const completion = await groq.chat.completions.create({
+          messages: [
+            { role: 'system', content: getSystemPrompt(selectedModel) },
+            ...newMessages.map(m => ({ role: m.role, content: m.content }))
+          ],
+          model: selectedModel,
+          temperature: modelInfo.temperature,
+          max_tokens: modelInfo.maxTokens
+        });
+
+        const aiContent = completion.choices[0]?.message?.content ||
+          'Xin lỗi, tôi không thể trả lời câu hỏi này.';
+        const aiMsg = { role: 'assistant', content: aiContent };
+        setMessages([...newMessages, aiMsg]);
+      } catch (error) {
+        console.error('Groq API error:', error);
+        let errorMessage = '⚠️ Lỗi kết nối AI. Vui lòng thử lại.';
+        if (error.message?.includes('rate limit')) {
+          errorMessage = '⏳ Quá nhiều yêu cầu. Vui lòng đợi 1 phút.';
+        } else if (error.message?.includes('invalid')) {
+          errorMessage = '🔑 Lỗi API Key. Vui lòng kiểm tra cấu hình.';
+        }
+        const errorMsg = { role: 'assistant', content: errorMessage };
+        setMessages([...newMessages, errorMsg]);
+        toast.error('Lỗi kết nối AI!');
+      }
+      setLoading(false);
+      return;
+    }
+
+    // ĐÃ LOGIN: Lưu vào Firestore
+    if (!currentChatId) {
+      await createNewChat();
+      setTimeout(() => sendMessage(input), 300);
+      setLoading(false);
+      return;
+    }
 
     const chatRef = doc(db, 'users', user.uid, 'conversations', currentChatId);
     await updateDoc(chatRef, {
@@ -309,7 +319,6 @@ export const useChat = (user) => {
     });
 
     try {
-      // Call Groq API
       const completion = await groq.chat.completions.create({
         messages: [
           { role: 'system', content: getSystemPrompt(selectedModel) },
@@ -320,9 +329,8 @@ export const useChat = (user) => {
         max_tokens: modelInfo.maxTokens
       });
 
-      const aiContent = completion.choices[0]?.message?.content || 
+      const aiContent = completion.choices[0]?.message?.content ||
         'Xin lỗi, tôi không thể trả lời câu hỏi này.';
-
       const aiMsg = { role: 'assistant', content: aiContent };
       const finalMessages = [...newMessages, aiMsg];
       setMessages(finalMessages);
@@ -339,19 +347,14 @@ export const useChat = (user) => {
       await setDoc(usageRef, updated);
       setUsage(updated);
 
-      // Clear uploaded files
-      setUploadedFiles([]);
-
     } catch (error) {
       console.error('Groq API error:', error);
-      
       let errorMessage = '⚠️ Lỗi kết nối AI. Vui lòng thử lại.';
       if (error.message?.includes('rate limit')) {
         errorMessage = '⏳ Quá nhiều yêu cầu. Vui lòng đợi 1 phút.';
       } else if (error.message?.includes('invalid')) {
         errorMessage = '🔑 Lỗi API Key. Vui lòng kiểm tra cấu hình.';
       }
-
       const errorMsg = { role: 'assistant', content: errorMessage };
       const finalMessages = [...newMessages, errorMsg];
       setMessages(finalMessages);
@@ -361,11 +364,10 @@ export const useChat = (user) => {
       });
       toast.error('Lỗi kết nối AI!');
     }
-
     setLoading(false);
   };
 
-  // ===== REAL-TIME LISTENER =====
+  // Real-time listener
   useEffect(() => {
     if (!user || !currentChatId) return;
 
@@ -384,7 +386,7 @@ export const useChat = (user) => {
     return () => unsubscribe();
   }, [user, currentChatId]);
 
-  // ===== LOAD DATA =====
+  // Load data
   useEffect(() => {
     if (user) {
       loadConversations();
@@ -393,7 +395,6 @@ export const useChat = (user) => {
     } else {
       setConversations([]);
       setCurrentChatId(null);
-      setMessages([]);
     }
   }, [user]);
 
