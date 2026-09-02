@@ -15,21 +15,20 @@ const ChatArea = ({
   MODELS,
   uploadedFiles,
   setUploadedFiles,
-  processFiles
+  processFiles,
+  user,
+  setShowAuth,
+  onSettingsClick,
+  theme
 }) => {
-  // ===== REFS =====
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
-
-  // ===== STATE =====
   const [isDragging, setIsDragging] = useState(false);
 
-  // ===== EFFECTS =====
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  // ===== HANDLERS =====
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -106,7 +105,15 @@ const ChatArea = ({
     return limit === Infinity ? '♾️' : `${used}/${limit}`;
   };
 
-  // ===== RENDER =====
+  const themeStyles = {
+    matrix: { borderColor: 'rgba(0,255,65,0.3)', shadowColor: 'rgba(0,255,65,0.1)' },
+    light: { borderColor: 'rgba(0,0,0,0.2)', shadowColor: 'rgba(0,0,0,0.05)' },
+    dark: { borderColor: 'rgba(255,255,255,0.15)', shadowColor: 'rgba(0,0,0,0.3)' },
+    stars: { borderColor: 'rgba(255,107,255,0.3)', shadowColor: 'rgba(255,107,255,0.1)' }
+  };
+
+  const currentTheme = themeStyles[theme] || themeStyles.matrix;
+
   return (
     <div
       style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh' }}
@@ -116,9 +123,9 @@ const ChatArea = ({
     >
       {/* ===== HEADER ===== */}
       <div style={{
-        padding: '12px 30px',
-        background: '#0d0d0d',
-        borderBottom: '1px solid rgba(0,255,65,0.1)',
+        padding: '12px 24px',
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -130,13 +137,14 @@ const ChatArea = ({
           <img src="/1.png" alt="Logo" style={{ height: '35px' }} />
           <h2 style={{
             fontSize: '20px',
-            textShadow: '0 0 20px rgba(0,255,65,0.1)'
+            color: 'var(--text-primary)'
           }}>
             An Nam AI
           </h2>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* ===== MODEL SELECTOR ===== */}
           {Object.entries(MODELS).map(([key, model]) => {
             const isActive = selectedModel === key;
             const usageKey = key === 'llama-3.1-8b-instant' ? 'basic' :
@@ -156,13 +164,13 @@ const ChatArea = ({
                 }}
                 style={{
                   padding: '6px 14px',
-                  background: isActive ? '#00ff41' : '#1a1a1a',
-                  color: isActive ? '#0a0a0a' : '#00ff41',
-                  border: isActive ? 'none' : '1px solid rgba(0,255,65,0.2)',
+                  background: isActive ? 'var(--text-primary)' : 'var(--input-bg)',
+                  color: isActive ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                  border: isActive ? 'none' : '1px solid var(--border-color)',
                   borderRadius: '20px',
                   fontSize: '12px',
                   fontWeight: isActive ? 'bold' : 'normal',
-                  boxShadow: isActive ? '0 0 25px rgba(0,255,65,0.2)' : 'none',
+                  boxShadow: isActive ? `0 0 25px var(--shadow-color)` : 'none',
                   opacity: isDisabled ? 0.4 : 1,
                   cursor: isDisabled ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s',
@@ -176,7 +184,7 @@ const ChatArea = ({
                   <span style={{
                     marginLeft: '4px',
                     fontSize: '10px',
-                    background: isActive ? '#0a0a0a' : '#2a2a2a',
+                    background: isActive ? 'var(--bg-secondary)' : '#2a2a2a',
                     padding: '1px 6px',
                     borderRadius: '10px'
                   }}>
@@ -186,6 +194,45 @@ const ChatArea = ({
               </button>
             );
           })}
+
+          {/* ===== NÚT CÀI ĐẶT ===== */}
+          <button
+            onClick={onSettingsClick}
+            style={{
+              padding: '8px 12px',
+              background: 'transparent',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '20px',
+              fontSize: '16px',
+              cursor: 'pointer',
+              transition: 'all 0.3s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-bg)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            ⚙️
+          </button>
+
+          {/* ===== NÚT ĐĂNG NHẬP ===== */}
+          {!user && (
+            <button
+              onClick={() => setShowAuth(true)}
+              style={{
+                padding: '6px 16px',
+                background: 'var(--text-primary)',
+                color: 'var(--bg-primary)',
+                border: 'none',
+                borderRadius: '20px',
+                fontWeight: 'bold',
+                fontSize: '13px',
+                cursor: 'pointer',
+                boxShadow: `0 0 20px var(--shadow-color)`
+              }}
+            >
+              🔑 Đăng nhập
+            </button>
+          )}
         </div>
       </div>
 
@@ -194,45 +241,63 @@ const ChatArea = ({
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '20px 30px',
+          padding: '20px 24px',
           display: 'flex',
           flexDirection: 'column',
-          background: isDragging ? 'rgba(0,255,65,0.03)' : 'transparent',
-          border: isDragging ? '2px dashed rgba(0,255,65,0.3)' : 'none',
+          background: isDragging ? 'var(--hover-bg)' : 'transparent',
+          border: isDragging ? `2px dashed var(--text-primary)` : 'none',
           transition: 'all 0.3s'
         }}
       >
         {messages.length === 0 ? (
           <div style={{
             textAlign: 'center',
-            color: '#555',
-            marginTop: '100px'
+            color: 'var(--text-muted)',
+            marginTop: '80px'
           }}>
             <div style={{ fontSize: '64px', marginBottom: '20px' }}>💬</div>
             <div style={{
               fontSize: '22px',
-              color: '#00ff41',
-              textShadow: '0 0 30px rgba(0,255,65,0.1)'
+              color: 'var(--text-primary)',
+              textShadow: `0 0 30px var(--shadow-color)`
             }}>
               An Nam AI
             </div>
-            <div style={{ fontSize: '14px', marginTop: '12px', color: '#444' }}>
+            <div style={{ fontSize: '14px', marginTop: '12px', color: 'var(--text-muted)' }}>
               📸 Ảnh • 📄 Tài liệu • 💻 Code
             </div>
-            <div style={{ fontSize: '13px', marginTop: '8px', color: '#333' }}>
+            <div style={{ fontSize: '13px', marginTop: '8px', color: 'var(--text-muted)' }}>
               {MODELS[selectedModel].description}
             </div>
-            <div style={{ fontSize: '12px', marginTop: '16px', color: '#2a2a2a' }}>
+            <div style={{ fontSize: '12px', marginTop: '16px', color: 'var(--text-muted)' }}>
               Kéo thả file vào đây để tải lên
             </div>
+            {!user && (
+              <div style={{ fontSize: '13px', marginTop: '20px' }}>
+                <button
+                  onClick={() => setShowAuth(true)}
+                  style={{
+                    padding: '8px 20px',
+                    background: 'var(--text-primary)',
+                    color: 'var(--bg-primary)',
+                    border: 'none',
+                    borderRadius: '20px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔑 Đăng nhập để lưu lịch sử
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           messages.map((msg, idx) => (
-            <Message key={idx} msg={msg} />
+            <Message key={idx} msg={msg} theme={theme} />
           ))
         )}
         {loading && (
-          <div style={{ alignSelf: 'flex-start', color: '#00ff41', padding: '10px' }}>
+          <div style={{ alignSelf: 'flex-start', color: 'var(--text-primary)', padding: '10px' }}>
             ⏳ Đang suy nghĩ
             <span className="typing-dots">...</span>
           </div>
@@ -243,9 +308,9 @@ const ChatArea = ({
       {/* ===== FILE PREVIEW ===== */}
       {uploadedFiles.length > 0 && (
         <div style={{
-          padding: '10px 30px',
-          background: '#0d0d0d',
-          borderTop: '1px solid rgba(0,255,65,0.05)',
+          padding: '10px 24px',
+          background: 'var(--bg-secondary)',
+          borderTop: '1px solid var(--border-color)',
           display: 'flex',
           gap: '10px',
           flexWrap: 'wrap',
@@ -256,15 +321,15 @@ const ChatArea = ({
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              background: '#1a1a1a',
+              background: 'var(--input-bg)',
               padding: '6px 12px',
               borderRadius: '8px',
-              border: '1px solid rgba(0,255,65,0.15)',
+              border: '1px solid var(--border-color)',
               fontSize: '13px'
             }}>
               <span>{file.type === 'image' ? '🖼️' : '📄'}</span>
               <span style={{
-                color: '#ccc',
+                color: 'var(--text-secondary)',
                 maxWidth: '150px',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -289,19 +354,19 @@ const ChatArea = ({
 
       {/* ===== INPUT ===== */}
       <div style={{
-        padding: '20px 30px',
-        borderTop: '1px solid rgba(0,255,65,0.1)',
-        background: '#0d0d0d',
+        padding: '16px 24px',
+        borderTop: '1px solid var(--border-color)',
+        background: 'var(--bg-secondary)',
         flexShrink: 0
       }}>
         <div style={{
           display: 'flex',
           gap: '12px',
-          background: '#1a1a1a',
+          background: 'var(--input-bg)',
           borderRadius: '30px',
           padding: '4px 4px 4px 20px',
-          border: '1px solid rgba(0,255,65,0.2)',
-          boxShadow: '0 0 30px rgba(0,255,65,0.03)',
+          border: `1px solid ${currentTheme.borderColor}`,
+          boxShadow: `0 0 30px ${currentTheme.shadowColor}`,
           transition: 'all 0.3s'
         }}>
           <input
@@ -315,7 +380,7 @@ const ChatArea = ({
               flex: 1,
               background: 'transparent',
               border: 'none',
-              color: '#00ff41',
+              color: 'var(--text-primary)',
               fontSize: '15px',
               padding: '12px 0',
               outline: 'none'
@@ -328,14 +393,14 @@ const ChatArea = ({
             style={{
               padding: '8px 12px',
               background: 'transparent',
-              color: '#00ff41',
-              border: '1px solid rgba(0,255,65,0.15)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-color)',
               borderRadius: '20px',
               fontSize: '16px',
               cursor: 'pointer',
               transition: 'all 0.3s'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0,255,65,0.08)'}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-bg)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             📎
@@ -354,25 +419,25 @@ const ChatArea = ({
             disabled={loading || (!input.trim() && uploadedFiles.length === 0)}
             style={{
               padding: '12px 24px',
-              background: '#00ff41',
-              color: '#0a0a0a',
+              background: 'var(--text-primary)',
+              color: 'var(--bg-primary)',
               border: 'none',
               borderRadius: '30px',
               fontWeight: 'bold',
               fontSize: '15px',
-              boxShadow: '0 0 25px rgba(0,255,65,0.15)',
+              boxShadow: `0 0 25px var(--shadow-color)`,
               opacity: loading || (!input.trim() && uploadedFiles.length === 0) ? 0.5 : 1,
               cursor: loading || (!input.trim() && uploadedFiles.length === 0) ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s'
             }}
             onMouseEnter={(e) => {
               if (!e.currentTarget.disabled) {
-                e.currentTarget.style.boxShadow = '0 0 40px rgba(0,255,65,0.3)';
+                e.currentTarget.style.boxShadow = `0 0 40px var(--shadow-color)`;
               }
             }}
             onMouseLeave={(e) => {
               if (!e.currentTarget.disabled) {
-                e.currentTarget.style.boxShadow = '0 0 25px rgba(0,255,65,0.15)';
+                e.currentTarget.style.boxShadow = `0 0 25px var(--shadow-color)`;
               }
             }}
           >
@@ -380,13 +445,12 @@ const ChatArea = ({
           </button>
         </div>
 
-        {/* ===== INFO ===== */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           marginTop: '8px',
           fontSize: '11px',
-          color: '#444'
+          color: 'var(--text-muted)'
         }}>
           <span>
             {MODELS[selectedModel].emoji} {MODELS[selectedModel].label}
