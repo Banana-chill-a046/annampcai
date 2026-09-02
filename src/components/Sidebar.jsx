@@ -8,18 +8,18 @@ const Sidebar = ({
   createNewChat,
   deleteChat,
   user,
-  logout
+  onSettingsClick
 }) => {
   const [hoveredId, setHoveredId] = useState(null);
 
   return (
     <div style={{
       width: '280px',
-      background: '#0d0d0d',
-      borderRight: '1px solid rgba(0,255,65,0.1)',
+      background: 'var(--bg-secondary)',
+      borderRight: '1px solid var(--border-color)',
       display: 'flex',
       flexDirection: 'column',
-      padding: '20px',
+      padding: '16px',
       flexShrink: 0,
       height: '100vh'
     }}>
@@ -28,17 +28,16 @@ const Sidebar = ({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '20px',
-        paddingBottom: '15px',
-        borderBottom: '1px solid rgba(0,255,65,0.1)'
+        marginBottom: '16px',
+        paddingBottom: '12px',
+        borderBottom: '1px solid var(--border-color)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img src="/2.png" alt="Logo" style={{ height: '30px' }} />
           <span style={{
             fontSize: '15px',
             fontWeight: 'bold',
-            color: '#00ff41',
-            textShadow: '0 0 10px rgba(0,255,65,0.15)'
+            color: 'var(--text-primary)'
           }}>
             Lịch sử
           </span>
@@ -46,19 +45,18 @@ const Sidebar = ({
         <button
           onClick={createNewChat}
           style={{
-            background: '#00ff41',
-            color: '#0a0a0a',
+            background: 'var(--text-primary)',
+            color: 'var(--bg-primary)',
             border: 'none',
             padding: '6px 14px',
             borderRadius: '20px',
             fontWeight: 'bold',
             fontSize: '13px',
-            boxShadow: '0 0 15px rgba(0,255,65,0.15)',
             cursor: 'pointer',
             transition: 'all 0.3s'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 0 30px rgba(0,255,65,0.3)'}
-          onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 0 15px rgba(0,255,65,0.15)'}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
         >
           + Mới
         </button>
@@ -68,15 +66,15 @@ const Sidebar = ({
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {conversations.length === 0 ? (
           <div style={{
-            color: '#555',
+            color: 'var(--text-muted)',
             textAlign: 'center',
             marginTop: '40px',
             fontSize: '14px'
           }}>
             Chưa có cuộc trò chuyện nào
             <br />
-            <span style={{ fontSize: '12px', color: '#444' }}>
-              Nhấn "+ Mới" để bắt đầu
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              {user ? 'Nhấn "+ Mới" để bắt đầu' : 'Đăng nhập để lưu lịch sử'}
             </span>
           </div>
         ) : (
@@ -92,10 +90,10 @@ const Sidebar = ({
               style={{
                 padding: '10px 12px',
                 marginBottom: '6px',
-                background: currentChatId === conv.id ? 'rgba(0,255,65,0.06)' : '#1a1a1a',
+                background: currentChatId === conv.id ? 'var(--hover-bg)' : 'transparent',
                 borderRadius: '10px',
                 cursor: 'pointer',
-                border: currentChatId === conv.id ? '1px solid rgba(0,255,65,0.2)' : '1px solid transparent',
+                border: currentChatId === conv.id ? '1px solid var(--border-color)' : '1px solid transparent',
                 transition: 'all 0.3s',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -108,12 +106,12 @@ const Sidebar = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 maxWidth: '180px',
-                color: currentChatId === conv.id ? '#00ff41' : '#ccc'
+                color: currentChatId === conv.id ? 'var(--text-primary)' : 'var(--text-secondary)'
               }}>
                 {conv.hasFiles && '📎 '}
                 {conv.title || 'Chat mới'}
               </span>
-              {(hoveredId === conv.id || currentChatId === conv.id) && (
+              {(hoveredId === conv.id || currentChatId === conv.id) && user && (
                 <span
                   onClick={(e) => { e.stopPropagation(); deleteChat(conv.id); }}
                   style={{
@@ -135,57 +133,33 @@ const Sidebar = ({
       </div>
 
       {/* ===== FOOTER ===== */}
-      <div style={{ paddingTop: '15px', borderTop: '1px solid rgba(0,255,65,0.1)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            background: 'rgba(0,255,65,0.12)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#00ff41'
-          }}>
-            {user?.email?.[0]?.toUpperCase() || 'U'}
-          </div>
-          <span style={{
-            fontSize: '13px',
-            color: '#aaa',
-            flex: 1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          }}>
-            {user?.email}
-          </span>
-        </div>
+      <div style={{ paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
         <button
-          onClick={logout}
+          onClick={onSettingsClick}
           style={{
             width: '100%',
             padding: '10px',
-            background: '#ff4444',
-            color: 'white',
-            border: 'none',
-            borderRadius: '20px',
-            fontWeight: 'bold',
-            boxShadow: '0 0 15px rgba(255,68,68,0.15)',
+            background: 'transparent',
+            color: 'var(--text-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '10px',
             cursor: 'pointer',
-            transition: 'all 0.3s'
+            fontSize: '13px',
+            transition: 'all 0.3s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 30px rgba(255,68,68,0.3)';
-            e.currentTarget.style.background = '#cc0000';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow = '0 0 15px rgba(255,68,68,0.15)';
-            e.currentTarget.style.background = '#ff4444';
-          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-bg)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
         >
-          Đăng xuất
+          ⚙️ Cài đặt
+          {user && (
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              👤 {user.email?.split('@')[0]}
+            </span>
+          )}
         </button>
       </div>
     </div>
