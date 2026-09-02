@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 
 const Auth = ({ isOpen, onClose }) => {
   const { login, register, loginWithGoogle, authLoading, error, setError, forgotPassword } = useAuth();
+  
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,36 +13,85 @@ const Auth = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e) => {
+  // ===== XỬ LÝ ĐĂNG NHẬP =====
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!email || !password) {
+      setError('Vui lòng nhập đầy đủ email và mật khẩu.');
+      return;
+    }
+    
+    const result = await login(email, password);
+    if (result.success) {
+      onClose();
+      setEmail('');
+      setPassword('');
+    }
+  };
+
+  // ===== XỬ LÝ ĐĂNG KÝ =====
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (isLogin) {
-      const success = await login(email, password);
-      if (success) onClose();
-    } else {
-      if (password !== confirmPassword) {
-        setError('Mật khẩu không khớp!');
-        return;
-      }
-      if (password.length < 6) {
-        setError('Mật khẩu phải có ít nhất 6 ký tự!');
-        return;
-      }
-      const success = await register(email, password, displayName);
-      if (success) onClose();
-    }
-  };
-
-  const handleForgotPassword = async () => {
+    // Kiểm tra email
     if (!email) {
-      setError('Vui lòng nhập email!');
+      setError('Vui lòng nhập email.');
       return;
     }
-    const success = await forgotPassword(email);
-    if (success) setShowForgotPassword(false);
+
+    // Kiểm tra password
+    if (!password) {
+      setError('Vui lòng nhập mật khẩu.');
+      return;
+    }
+
+    // Kiểm tra độ dài mật khẩu
+    if (password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự.');
+      return;
+    }
+
+    // Kiểm tra xác nhận mật khẩu
+    if (password !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp.');
+      return;
+    }
+
+    // Thực hiện đăng ký
+    const result = await register(email, password, displayName);
+    if (result.success) {
+      onClose();
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setDisplayName('');
+    }
   };
 
+  // ===== XỬ LÝ QUÊN MẬT KHẨU =====
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Vui lòng nhập email để đặt lại mật khẩu.');
+      return;
+    }
+    const result = await forgotPassword(email);
+    if (result.success) {
+      setShowForgotPassword(false);
+    }
+  };
+
+  // ===== CHUYỂN ĐỔI GIỮA ĐĂNG NHẬP/ĐĂNG KÝ =====
+  const switchMode = () => {
+    setIsLogin(!isLogin);
+    setError('');
+    setPassword('');
+    setConfirmPassword('');
+  };
+
+  // ===== STYLES =====
   const inputStyle = {
     width: '100%',
     padding: '14px 16px',
@@ -53,6 +103,27 @@ const Auth = ({ isOpen, onClose }) => {
     fontSize: '15px',
     outline: 'none',
     transition: 'border-color 0.3s'
+  };
+
+  const buttonStyle = {
+    width: '100%',
+    padding: '14px',
+    background: 'var(--text-primary)',
+    color: 'var(--bg-primary)',
+    border: 'none',
+    borderRadius: '10px',
+    fontWeight: 'bold',
+    fontSize: '16px',
+    boxShadow: '0 0 30px var(--shadow-color)',
+    opacity: 1,
+    cursor: 'pointer',
+    transition: 'all 0.3s'
+  };
+
+  const disabledButtonStyle = {
+    ...buttonStyle,
+    opacity: 0.5,
+    cursor: 'not-allowed'
   };
 
   return (
@@ -84,6 +155,7 @@ const Auth = ({ isOpen, onClose }) => {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* ===== HEADER ===== */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <img src="/2.png" alt="An Nam AI" style={{ height: '50px', marginBottom: '12px' }} />
           <h2 style={{
@@ -98,16 +170,20 @@ const Auth = ({ isOpen, onClose }) => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        {/* ===== FORM ===== */}
+        <form onSubmit={isLogin ? handleLogin : handleRegister}>
+          {/* Tên hiển thị - chỉ khi đăng ký */}
           {!isLogin && (
             <input
               type="text"
-              placeholder="Tên hiển thị"
+              placeholder="Tên hiển thị (tùy chọn)"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               style={inputStyle}
             />
           )}
+
+          {/* Email */}
           <input
             type="email"
             placeholder="Email"
@@ -116,14 +192,19 @@ const Auth = ({ isOpen, onClose }) => {
             required
             style={inputStyle}
           />
+
+          {/* Mật khẩu */}
           <input
             type="password"
             placeholder="Mật khẩu"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={6}
             style={inputStyle}
           />
+
+          {/* Xác nhận mật khẩu - chỉ khi đăng ký */}
           {!isLogin && (
             <input
               type="password"
@@ -134,39 +215,40 @@ const Auth = ({ isOpen, onClose }) => {
               style={inputStyle}
             />
           )}
+
+          {/* Hiển thị lỗi */}
           {error && (
-            <p style={{ color: '#ff4444', fontSize: '14px', marginBottom: '12px' }}>
+            <div style={{
+              padding: '10px 14px',
+              background: 'rgba(255,68,68,0.1)',
+              border: '1px solid #ff4444',
+              borderRadius: '8px',
+              marginBottom: '14px',
+              color: '#ff4444',
+              fontSize: '14px'
+            }}>
               ⚠️ {error}
-            </p>
+            </div>
           )}
+
+          {/* Nút submit */}
           <button
             type="submit"
             disabled={authLoading}
-            style={{
-              width: '100%',
-              padding: '14px',
-              background: 'var(--text-primary)',
-              color: 'var(--bg-primary)',
-              border: 'none',
-              borderRadius: '10px',
-              fontWeight: 'bold',
-              fontSize: '16px',
-              boxShadow: '0 0 30px var(--shadow-color)',
-              opacity: authLoading ? 0.5 : 1,
-              cursor: authLoading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.3s'
-            }}
+            style={authLoading ? disabledButtonStyle : buttonStyle}
           >
-            {authLoading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Đăng ký')}
+            {authLoading ? '⏳ Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Đăng ký')}
           </button>
         </form>
 
+        {/* ===== DIVIDER ===== */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', margin: '20px 0' }}>
           <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
           <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>HOẶC</span>
           <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
         </div>
 
+        {/* ===== ĐĂNG NHẬP GOOGLE ===== */}
         <button
           onClick={loginWithGoogle}
           disabled={authLoading}
@@ -183,7 +265,8 @@ const Auth = ({ isOpen, onClose }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px'
+            gap: '10px',
+            opacity: authLoading ? 0.5 : 1
           }}
           onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-bg)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'var(--input-bg)'}
@@ -192,16 +275,18 @@ const Auth = ({ isOpen, onClose }) => {
           Đăng nhập với Google
         </button>
 
+        {/* ===== CHUYỂN ĐỔI GIỮA ĐĂNG NHẬP/ĐĂNG KÝ ===== */}
         <div style={{ textAlign: 'center', marginTop: '16px', color: 'var(--text-muted)', fontSize: '14px' }}>
           {isLogin ? 'Chưa có tài khoản? ' : 'Đã có tài khoản? '}
           <span
-            onClick={() => { setIsLogin(!isLogin); setError(''); }}
+            onClick={switchMode}
             style={{ color: 'var(--text-primary)', cursor: 'pointer', textDecoration: 'underline' }}
           >
             {isLogin ? 'Đăng ký' : 'Đăng nhập'}
           </span>
         </div>
 
+        {/* ===== QUÊN MẬT KHẨU ===== */}
         {isLogin && (
           <div style={{ textAlign: 'center', marginTop: '8px' }}>
             <span
@@ -213,6 +298,7 @@ const Auth = ({ isOpen, onClose }) => {
           </div>
         )}
 
+        {/* ===== ĐÓNG ===== */}
         <button
           onClick={onClose}
           style={{
@@ -229,7 +315,7 @@ const Auth = ({ isOpen, onClose }) => {
         </button>
       </div>
 
-      {/* Forgot Password Popup */}
+      {/* ===== QUÊN MẬT KHẨU POPUP ===== */}
       {showForgotPassword && (
         <div
           style={{
