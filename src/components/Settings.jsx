@@ -79,7 +79,6 @@ const Settings = ({ isOpen, onClose, user, logout, theme, setTheme, language, se
           </span>
         </h3>
 
-        {/* ===== NGÔN NGỮ ===== */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
             🌐 Ngôn ngữ
@@ -106,7 +105,6 @@ const Settings = ({ isOpen, onClose, user, logout, theme, setTheme, language, se
           </div>
         </div>
 
-        {/* ===== GIAO DIỆN ===== */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
             🎨 Giao diện
@@ -136,7 +134,6 @@ const Settings = ({ isOpen, onClose, user, logout, theme, setTheme, language, se
           </div>
         </div>
 
-        {/* ===== ĐĂNG XUẤT ===== */}
         {user && (
           <button
             onClick={handleLogout}
@@ -166,7 +163,6 @@ const Settings = ({ isOpen, onClose, user, logout, theme, setTheme, language, se
           </button>
         )}
 
-        {/* ===== VỀ CHÚNG TÔI ===== */}
         <button
           onClick={() => setShowAbout(!showAbout)}
           style={{
