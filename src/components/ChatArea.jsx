@@ -27,7 +27,9 @@ const ChatArea = ({
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   }, []);
 
   const handleKeyDown = (e) => {
@@ -143,7 +145,6 @@ const ChatArea = ({
         </div>
 
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* ===== MODEL SELECTOR ===== */}
           {Object.entries(MODELS).map(([key, model]) => {
             const isActive = selectedModel === key;
             const isBasic = model.limit === Infinity;
@@ -207,7 +208,6 @@ const ChatArea = ({
             );
           })}
 
-          {/* ===== NÚT CÀI ĐẶT ===== */}
           <button
             onClick={onSettingsClick}
             style={{
@@ -226,7 +226,6 @@ const ChatArea = ({
             ⚙️
           </button>
 
-          {/* ===== NÚT ĐĂNG NHẬP ===== */}
           {!user && (
             <button
               onClick={() => setShowAuth(true)}
@@ -282,9 +281,6 @@ const ChatArea = ({
               {MODELS[selectedModel].description}
             </div>
             <div style={{ fontSize: '12px', marginTop: '16px', color: 'var(--text-muted)' }}>
-              Kéo thả file vào đây để tải lên
-            </div>
-            <div style={{ fontSize: '12px', marginTop: '8px', color: 'var(--text-muted)' }}>
               💡 Lượt dùng: {getUsageText()}
             </div>
             {!user && (
