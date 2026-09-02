@@ -17,47 +17,59 @@ import { db } from '../firebase';
 import Groq from 'groq-sdk';
 import toast from 'react-hot-toast';
 
+// =============================================
+// ===== GROQ CLIENT =====
+// =============================================
 const groq = new Groq({
   apiKey: import.meta.env.VITE_GROQ_API_KEY,
   dangerouslyAllowBrowser: true
 });
 
+// =============================================
+// ===== MODELS - CẬP NHẬT MỚI NHẤT =====
+// =============================================
 export const MODELS = {
+  // BASIC - KHÔNG GIỚI HẠN
   'llama-3.1-8b-instant': {
     id: 'llama-3.1-8b-instant',
     label: 'Basic',
     emoji: '🌟',
-    limit: 10,
+    limit: Infinity, // ← VÔ HẠN
     supportImage: true,
     supportFile: false,
     maxTokens: 2048,
     temperature: 0.7,
-    description: '🌟 10 lượt/ngày, hỗ trợ ảnh'
+    description: '🌟 Không giới hạn lượt, hỗ trợ ảnh'
   },
+  // PRO - 15 LƯỢT
   'llama-3.3-70b-versatile': {
     id: 'llama-3.3-70b-versatile',
     label: 'Pro',
     emoji: '🚀',
-    limit: 15,
+    limit: 15, // ← 15 LƯỢT
     supportImage: true,
     supportFile: true,
     maxTokens: 4096,
     temperature: 0.5,
     description: '🚀 15 lượt/ngày, hỗ trợ ảnh + tài liệu'
   },
+  // PREMIUM - 10 LƯỢT
   'deepseek-r1-distill-llama-70b': {
     id: 'deepseek-r1-distill-llama-70b',
     label: 'Premium',
     emoji: '👑',
-    limit: Infinity,
+    limit: 10, // ← 10 LƯỢT
     supportImage: true,
     supportFile: true,
     maxTokens: 8192,
     temperature: 0.3,
-    description: '👑 Không giới hạn, siêu thông minh, mọi loại file'
+    description: '👑 10 lượt/ngày, siêu thông minh, mọi loại file'
   }
 };
 
+// =============================================
+// ===== SYSTEM PROMPTS =====
+// =============================================
 const SYSTEM_PROMPTS = {
   basic: `Bạn là An Nam AI - trợ lý thông minh.
 - Trả lời bằng tiếng Việt, tự nhiên như ChatGPT
@@ -81,7 +93,11 @@ const SYSTEM_PROMPTS = {
 - Giọng điệu: Uyên bác, truyền cảm hứng`
 };
 
+// =============================================
+// ===== HOOK =====
+// =============================================
 export const useChat = (user) => {
+  // ===== STATE =====
   const [conversations, setConversations] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -90,17 +106,41 @@ export const useChat = (user) => {
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
+  // ===== GET MODEL KEY =====
   const getModelKey = (modelId) => {
     if (modelId === 'llama-3.1-8b-instant') return 'basic';
     if (modelId === 'llama-3.3-70b-versatile') return 'pro';
-    return 'premium';
+    if (modelId === 'deepseek-r1-distill-llama-70b') return 'premium';
+    return 'basic';
   };
 
+  // ===== GET SYSTEM PROMPT =====
   const getSystemPrompt = (modelId) => {
     const key = getModelKey(modelId);
     return SYSTEM_PROMPTS[key] || SYSTEM_PROMPTS.basic;
   };
 
+  // ===== CHECK USAGE LIMIT =====
+  const checkUsageLimit = (modelId) => {
+    const modelInfo = MODELS[modelId];
+    if (modelInfo.limit === Infinity) return true; // Basic vô hạn
+    
+    const key = getModelKey(modelId);
+    const used = usage[key] || 0;
+    return used < modelInfo.limit;
+  };
+
+  // ===== GET REMAINING USAGE =====
+  const getRemainingUsage = (modelId) => {
+    const modelInfo = MODELS[modelId];
+    if (modelInfo.limit === Infinity) return '♾️';
+    
+    const key = getModelKey(modelId);
+    const used = usage[key] || 0;
+    return `${modelInfo.limit - used}`;
+  };
+
+  // ===== LOAD CONVERSATIONS =====
   const loadConversations = async () => {
     if (!user) return;
     try {
@@ -124,6 +164,7 @@ export const useChat = (user) => {
     }
   };
 
+  // ===== LOAD USAGE =====
   const loadUsage = async () => {
     if (!user) return;
     try {
@@ -141,6 +182,7 @@ export const useChat = (user) => {
     }
   };
 
+  // ===== RESET DAILY USAGE =====
   const resetDailyUsage = async () => {
     if (!user) return;
     try {
@@ -157,6 +199,7 @@ export const useChat = (user) => {
     }
   };
 
+  // ===== CREATE NEW CHAT =====
   const createNewChat = async () => {
     if (!user) {
       setMessages([]);
@@ -189,6 +232,7 @@ export const useChat = (user) => {
     }
   };
 
+  // ===== DELETE CHAT =====
   const deleteChat = async (chatId) => {
     if (!user || !chatId) return;
     if (!window.confirm('Bạn có chắc muốn xóa chat này?')) return;
@@ -207,6 +251,7 @@ export const useChat = (user) => {
     }
   };
 
+  // ===== PROCESS FILES =====
   const processFiles = async (files) => {
     const processed = [];
     for (const file of files) {
@@ -234,17 +279,23 @@ export const useChat = (user) => {
     return processed;
   };
 
+  // ===== SEND MESSAGE =====
   const sendMessage = async (input) => {
     if (!input.trim() && uploadedFiles.length === 0) return;
     if (loading) return;
 
     const modelKey = getModelKey(selectedModel);
     const modelInfo = MODELS[selectedModel];
-    const used = usage[modelKey] || 0;
 
-    if (modelInfo.limit !== Infinity && used >= modelInfo.limit) {
-      toast.error(`❌ Hết lượt ${modelInfo.label} hôm nay!`);
-      return;
+    // ===== KIỂM TRA GIỚI HẠN LƯỢT DÙNG =====
+    if (modelInfo.limit !== Infinity) {
+      const used = usage[modelKey] || 0;
+      if (used >= modelInfo.limit) {
+        toast.error(`❌ Hết ${modelInfo.limit} lượt ${modelInfo.label} hôm nay! Vui lòng dùng Basic.`);
+        // Tự động chuyển sang Basic
+        setSelectedModel('llama-3.1-8b-instant');
+        return;
+      }
     }
 
     let content = input.trim();
@@ -270,7 +321,7 @@ export const useChat = (user) => {
     setLoading(true);
     setUploadedFiles([]);
 
-    // Nếu chưa login: KHÔNG lưu Firestore
+    // ===== CHƯA LOGIN: KHÔNG LƯU =====
     if (!user) {
       try {
         const completion = await groq.chat.completions.create({
@@ -294,6 +345,8 @@ export const useChat = (user) => {
           errorMessage = '⏳ Quá nhiều yêu cầu. Vui lòng đợi 1 phút.';
         } else if (error.message?.includes('invalid')) {
           errorMessage = '🔑 Lỗi API Key. Vui lòng kiểm tra cấu hình.';
+        } else if (error.message?.includes('model_not_found')) {
+          errorMessage = '🤖 Model không khả dụng. Vui lòng thử model khác.';
         }
         const errorMsg = { role: 'assistant', content: errorMessage };
         setMessages([...newMessages, errorMsg]);
@@ -303,7 +356,7 @@ export const useChat = (user) => {
       return;
     }
 
-    // ĐÃ LOGIN: Lưu vào Firestore
+    // ===== ĐÃ LOGIN: LƯU VÀO FIRESTORE =====
     if (!currentChatId) {
       await createNewChat();
       setTimeout(() => sendMessage(input), 300);
@@ -340,12 +393,20 @@ export const useChat = (user) => {
         updatedAt: serverTimestamp()
       });
 
-      // Update usage
-      const usageRef = doc(db, 'users', user.uid, 'usage', 'daily');
-      const newCount = (usage[modelKey] || 0) + 1;
-      const updated = { ...usage, [modelKey]: newCount };
-      await setDoc(usageRef, updated);
-      setUsage(updated);
+      // ===== CẬP NHẬT LƯỢT DÙNG (CHỈ KHI KHÔNG PHẢI BASIC) =====
+      if (modelInfo.limit !== Infinity) {
+        const usageRef = doc(db, 'users', user.uid, 'usage', 'daily');
+        const newCount = (usage[modelKey] || 0) + 1;
+        const updated = { ...usage, [modelKey]: newCount };
+        await setDoc(usageRef, updated);
+        setUsage(updated);
+        
+        // Hiển thị số lượt còn lại
+        const remaining = modelInfo.limit - newCount;
+        if (remaining <= 3) {
+          toast.warning(`⚠️ Còn ${remaining} lượt ${modelInfo.label} hôm nay!`);
+        }
+      }
 
     } catch (error) {
       console.error('Groq API error:', error);
@@ -354,6 +415,9 @@ export const useChat = (user) => {
         errorMessage = '⏳ Quá nhiều yêu cầu. Vui lòng đợi 1 phút.';
       } else if (error.message?.includes('invalid')) {
         errorMessage = '🔑 Lỗi API Key. Vui lòng kiểm tra cấu hình.';
+      } else if (error.message?.includes('model_not_found')) {
+        errorMessage = '🤖 Model không khả dụng. Đang chuyển sang Basic...';
+        setSelectedModel('llama-3.1-8b-instant');
       }
       const errorMsg = { role: 'assistant', content: errorMessage };
       const finalMessages = [...newMessages, errorMsg];
@@ -367,7 +431,7 @@ export const useChat = (user) => {
     setLoading(false);
   };
 
-  // Real-time listener
+  // ===== REAL-TIME LISTENER =====
   useEffect(() => {
     if (!user || !currentChatId) return;
 
@@ -386,7 +450,7 @@ export const useChat = (user) => {
     return () => unsubscribe();
   }, [user, currentChatId]);
 
-  // Load data
+  // ===== LOAD DATA =====
   useEffect(() => {
     if (user) {
       loadConversations();
@@ -415,6 +479,8 @@ export const useChat = (user) => {
     sendMessage,
     processFiles,
     MODELS,
-    getSystemPrompt
+    getSystemPrompt,
+    checkUsageLimit,
+    getRemainingUsage
   };
 };
