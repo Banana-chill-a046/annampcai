@@ -8,25 +8,11 @@ import ChatArea from './components/ChatArea';
 import Settings from './components/Settings';
 
 const App = () => {
-  // ===== HOOKS =====
+  // ===== AUTH HOOK =====
   const { user, loading, logout } = useAuth();
-  const {
-    conversations,
-    currentChatId,
-    setCurrentChatId,
-    messages,
-    setMessages,
-    selectedModel,
-    setSelectedModel,
-    usage,
-    loading: chatLoading,
-    uploadedFiles,
-    setUploadedFiles,
-    createNewChat,
-    deleteChat,
-    sendMessage,
-    processFiles
-  } = useChat(user);
+
+  // ===== CHAT HOOK =====
+  const chat = useChat(user);
 
   // ===== STATE =====
   const [showAuth, setShowAuth] = useState(false);
@@ -48,6 +34,7 @@ const App = () => {
     document.body.style.color = 'var(--text-primary)';
   }, [theme]);
 
+  // ===== LOADING =====
   if (loading) {
     return (
       <div style={{
@@ -64,6 +51,7 @@ const App = () => {
     );
   }
 
+  // ===== RENDER =====
   return (
     <div style={{
       display: 'flex',
@@ -73,35 +61,36 @@ const App = () => {
     }}>
       {/* ===== SIDEBAR ===== */}
       <Sidebar
-        conversations={conversations}
-        currentChatId={currentChatId}
-        setCurrentChatId={setCurrentChatId}
-        setMessages={setMessages}
-        createNewChat={createNewChat}
-        deleteChat={deleteChat}
+        conversations={chat.conversations}
+        currentChatId={chat.currentChatId}
+        setCurrentChatId={chat.setCurrentChatId}
+        setMessages={chat.setMessages}
+        createNewChat={chat.createNewChat}
+        deleteChat={chat.deleteChat}
         user={user}
         onSettingsClick={() => setShowSettings(true)}
       />
 
       {/* ===== CHAT AREA ===== */}
       <ChatArea
-        messages={messages}
-        selectedModel={selectedModel}
-        setSelectedModel={setSelectedModel}
-        usage={usage}
-        loading={chatLoading}
+        messages={chat.messages}
+        selectedModel={chat.selectedModel}
+        setSelectedModel={chat.setSelectedModel}
+        usage={chat.usage}
+        loading={chat.loading}
         input={input}
         setInput={setInput}
-        sendMessage={sendMessage}
+        sendMessage={chat.sendMessage}
         messagesEndRef={messagesEndRef}
         MODELS={MODELS}
-        uploadedFiles={uploadedFiles}
-        setUploadedFiles={setUploadedFiles}
-        processFiles={processFiles}
+        uploadedFiles={chat.uploadedFiles}
+        setUploadedFiles={chat.setUploadedFiles}
+        processFiles={chat.processFiles}
         user={user}
         setShowAuth={setShowAuth}
         onSettingsClick={() => setShowSettings(true)}
         theme={theme}
+        getRemainingUsage={chat.getRemainingUsage}
       />
 
       {/* ===== MODALS ===== */}
