@@ -19,7 +19,8 @@ const ChatArea = ({
   user,
   setShowAuth,
   onSettingsClick,
-  theme
+  theme,
+  getRemainingUsage
 }) => {
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -98,11 +99,9 @@ const ChatArea = ({
   };
 
   const getUsageText = () => {
-    const key = selectedModel === 'llama-3.1-8b-instant' ? 'basic' :
-                selectedModel === 'llama-3.3-70b-versatile' ? 'pro' : 'premium';
-    const used = usage[key] || 0;
-    const limit = MODELS[selectedModel].limit;
-    return limit === Infinity ? '♾️' : `${used}/${limit}`;
+    const remaining = getRemainingUsage(selectedModel);
+    if (remaining === '♾️') return '♾️ Không giới hạn';
+    return `Còn ${remaining} lượt`;
   };
 
   const themeStyles = {
@@ -147,17 +146,18 @@ const ChatArea = ({
           {/* ===== MODEL SELECTOR ===== */}
           {Object.entries(MODELS).map(([key, model]) => {
             const isActive = selectedModel === key;
+            const isBasic = model.limit === Infinity;
             const usageKey = key === 'llama-3.1-8b-instant' ? 'basic' :
                             key === 'llama-3.3-70b-versatile' ? 'pro' : 'premium';
             const used = usage[usageKey] || 0;
-            const isDisabled = model.limit !== Infinity && used >= model.limit;
+            const isDisabled = !isBasic && used >= model.limit;
 
             return (
               <button
                 key={key}
                 onClick={() => {
                   if (isDisabled) {
-                    toast.error(`❌ Hết lượt ${model.label} hôm nay!`);
+                    toast.error(`❌ Hết ${model.limit} lượt ${model.label} hôm nay!`);
                     return;
                   }
                   setSelectedModel(key);
@@ -180,7 +180,7 @@ const ChatArea = ({
                 }}
               >
                 {model.emoji} {model.label}
-                {model.limit !== Infinity && (
+                {!isBasic && (
                   <span style={{
                     marginLeft: '4px',
                     fontSize: '10px',
@@ -189,6 +189,18 @@ const ChatArea = ({
                     borderRadius: '10px'
                   }}>
                     {used}/{model.limit}
+                  </span>
+                )}
+                {isBasic && (
+                  <span style={{
+                    marginLeft: '4px',
+                    fontSize: '10px',
+                    background: isActive ? 'var(--bg-secondary)' : '#2a2a2a',
+                    padding: '1px 6px',
+                    borderRadius: '10px',
+                    color: '#00ff41'
+                  }}>
+                    ♾️
                   </span>
                 )}
               </button>
@@ -271,6 +283,9 @@ const ChatArea = ({
             </div>
             <div style={{ fontSize: '12px', marginTop: '16px', color: 'var(--text-muted)' }}>
               Kéo thả file vào đây để tải lên
+            </div>
+            <div style={{ fontSize: '12px', marginTop: '8px', color: 'var(--text-muted)' }}>
+              💡 Lượt dùng: {getUsageText()}
             </div>
             {!user && (
               <div style={{ fontSize: '13px', marginTop: '20px' }}>
@@ -455,6 +470,7 @@ const ChatArea = ({
           <span>
             {MODELS[selectedModel].emoji} {MODELS[selectedModel].label}
             {MODELS[selectedModel].limit !== Infinity && ` • ${getUsageText()}`}
+            {MODELS[selectedModel].limit === Infinity && ' • ♾️ Không giới hạn'}
           </span>
           <span>
             {MODELS[selectedModel].supportImage && '📸 '}
