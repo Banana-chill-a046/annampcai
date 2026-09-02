@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 
 const Settings = ({ isOpen, onClose, user, logout, theme, setTheme, language, setLanguage }) => {
