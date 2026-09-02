@@ -26,39 +26,36 @@ const groq = new Groq({
 });
 
 // =============================================
-// ===== MODELS - CẬP NHẬT MỚI NHẤT =====
+// ===== MODELS =====
 // =============================================
 export const MODELS = {
-  // BASIC - KHÔNG GIỚI HẠN
   'llama-3.1-8b-instant': {
     id: 'llama-3.1-8b-instant',
     label: 'Basic',
     emoji: '🌟',
-    limit: Infinity, // ← VÔ HẠN
+    limit: Infinity,
     supportImage: true,
     supportFile: false,
     maxTokens: 2048,
     temperature: 0.7,
     description: '🌟 Không giới hạn lượt, hỗ trợ ảnh'
   },
-  // PRO - 15 LƯỢT
   'llama-3.3-70b-versatile': {
     id: 'llama-3.3-70b-versatile',
     label: 'Pro',
     emoji: '🚀',
-    limit: 15, // ← 15 LƯỢT
+    limit: 15,
     supportImage: true,
     supportFile: true,
     maxTokens: 4096,
     temperature: 0.5,
     description: '🚀 15 lượt/ngày, hỗ trợ ảnh + tài liệu'
   },
-  // PREMIUM - 10 LƯỢT
   'deepseek-r1-distill-llama-70b': {
     id: 'deepseek-r1-distill-llama-70b',
     label: 'Premium',
     emoji: '👑',
-    limit: 10, // ← 10 LƯỢT
+    limit: 10,
     supportImage: true,
     supportFile: true,
     maxTokens: 8192,
@@ -106,7 +103,7 @@ export const useChat = (user) => {
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  // ===== GET MODEL KEY =====
+  // ===== HELPERS =====
   const getModelKey = (modelId) => {
     if (modelId === 'llama-3.1-8b-instant') return 'basic';
     if (modelId === 'llama-3.3-70b-versatile') return 'pro';
@@ -114,30 +111,18 @@ export const useChat = (user) => {
     return 'basic';
   };
 
-  // ===== GET SYSTEM PROMPT =====
   const getSystemPrompt = (modelId) => {
     const key = getModelKey(modelId);
     return SYSTEM_PROMPTS[key] || SYSTEM_PROMPTS.basic;
   };
 
-  // ===== CHECK USAGE LIMIT =====
-  const checkUsageLimit = (modelId) => {
-    const modelInfo = MODELS[modelId];
-    if (modelInfo.limit === Infinity) return true; // Basic vô hạn
-    
-    const key = getModelKey(modelId);
-    const used = usage[key] || 0;
-    return used < modelInfo.limit;
-  };
-
-  // ===== GET REMAINING USAGE =====
   const getRemainingUsage = (modelId) => {
     const modelInfo = MODELS[modelId];
     if (modelInfo.limit === Infinity) return '♾️';
-    
     const key = getModelKey(modelId);
     const used = usage[key] || 0;
-    return `${modelInfo.limit - used}`;
+    const remaining = modelInfo.limit - used;
+    return remaining > 0 ? `${remaining}` : '0';
   };
 
   // ===== LOAD CONVERSATIONS =====
@@ -287,13 +272,13 @@ export const useChat = (user) => {
     const modelKey = getModelKey(selectedModel);
     const modelInfo = MODELS[selectedModel];
 
-    // ===== KIỂM TRA GIỚI HẠN LƯỢT DÙNG =====
+    // Kiểm tra giới hạn
     if (modelInfo.limit !== Infinity) {
       const used = usage[modelKey] || 0;
       if (used >= modelInfo.limit) {
-        toast.error(`❌ Hết ${modelInfo.limit} lượt ${modelInfo.label} hôm nay! Vui lòng dùng Basic.`);
-        // Tự động chuyển sang Basic
+        toast.error(`❌ Hết ${modelInfo.limit} lượt ${modelInfo.label} hôm nay!`);
         setSelectedModel('llama-3.1-8b-instant');
+        toast.info('🔄 Đã chuyển sang Basic (không giới hạn)');
         return;
       }
     }
@@ -321,7 +306,7 @@ export const useChat = (user) => {
     setLoading(true);
     setUploadedFiles([]);
 
-    // ===== CHƯA LOGIN: KHÔNG LƯU =====
+    // ===== CHƯA LOGIN =====
     if (!user) {
       try {
         const completion = await groq.chat.completions.create({
@@ -340,15 +325,10 @@ export const useChat = (user) => {
         setMessages([...newMessages, aiMsg]);
       } catch (error) {
         console.error('Groq API error:', error);
-        let errorMessage = '⚠️ Lỗi kết nối AI. Vui lòng thử lại.';
-        if (error.message?.includes('rate limit')) {
-          errorMessage = '⏳ Quá nhiều yêu cầu. Vui lòng đợi 1 phút.';
-        } else if (error.message?.includes('invalid')) {
-          errorMessage = '🔑 Lỗi API Key. Vui lòng kiểm tra cấu hình.';
-        } else if (error.message?.includes('model_not_found')) {
-          errorMessage = '🤖 Model không khả dụng. Vui lòng thử model khác.';
-        }
-        const errorMsg = { role: 'assistant', content: errorMessage };
+        const errorMsg = { 
+          role: 'assistant', 
+          content: '⚠️ Lỗi kết nối AI. Vui lòng thử lại.' 
+        };
         setMessages([...newMessages, errorMsg]);
         toast.error('Lỗi kết nối AI!');
       }
@@ -356,7 +336,7 @@ export const useChat = (user) => {
       return;
     }
 
-    // ===== ĐÃ LOGIN: LƯU VÀO FIRESTORE =====
+    // ===== ĐÃ LOGIN =====
     if (!currentChatId) {
       await createNewChat();
       setTimeout(() => sendMessage(input), 300);
@@ -393,7 +373,7 @@ export const useChat = (user) => {
         updatedAt: serverTimestamp()
       });
 
-      // ===== CẬP NHẬT LƯỢT DÙNG (CHỈ KHI KHÔNG PHẢI BASIC) =====
+      // Cập nhật lượt dùng
       if (modelInfo.limit !== Infinity) {
         const usageRef = doc(db, 'users', user.uid, 'usage', 'daily');
         const newCount = (usage[modelKey] || 0) + 1;
@@ -401,25 +381,18 @@ export const useChat = (user) => {
         await setDoc(usageRef, updated);
         setUsage(updated);
         
-        // Hiển thị số lượt còn lại
         const remaining = modelInfo.limit - newCount;
-        if (remaining <= 3) {
+        if (remaining <= 3 && remaining > 0) {
           toast.warning(`⚠️ Còn ${remaining} lượt ${modelInfo.label} hôm nay!`);
         }
       }
 
     } catch (error) {
       console.error('Groq API error:', error);
-      let errorMessage = '⚠️ Lỗi kết nối AI. Vui lòng thử lại.';
-      if (error.message?.includes('rate limit')) {
-        errorMessage = '⏳ Quá nhiều yêu cầu. Vui lòng đợi 1 phút.';
-      } else if (error.message?.includes('invalid')) {
-        errorMessage = '🔑 Lỗi API Key. Vui lòng kiểm tra cấu hình.';
-      } else if (error.message?.includes('model_not_found')) {
-        errorMessage = '🤖 Model không khả dụng. Đang chuyển sang Basic...';
-        setSelectedModel('llama-3.1-8b-instant');
-      }
-      const errorMsg = { role: 'assistant', content: errorMessage };
+      const errorMsg = { 
+        role: 'assistant', 
+        content: '⚠️ Lỗi kết nối AI. Vui lòng thử lại.' 
+      };
       const finalMessages = [...newMessages, errorMsg];
       setMessages(finalMessages);
       await updateDoc(chatRef, {
@@ -462,6 +435,7 @@ export const useChat = (user) => {
     }
   }, [user]);
 
+  // ===== RETURN =====
   return {
     conversations,
     currentChatId,
@@ -478,9 +452,7 @@ export const useChat = (user) => {
     deleteChat,
     sendMessage,
     processFiles,
-    MODELS,
     getSystemPrompt,
-    checkUsageLimit,
     getRemainingUsage
   };
 };
